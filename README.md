@@ -49,3 +49,149 @@ Implement CLV segmentation to strategically boost revenue, enhance ARPU, and fos
 4. Segment Profiling and Strategy Formulation:
    - Understand each segment's unique traits.
    - Develop personalized marketing strategies (special offers, targeted promotions) aligned with customer preferences.
+
+  ### Solution
+
+  -- Query 1: Create Schema
+CREATE SCHEMA Nexa.Sat;
+
+-- Query 2: Create a table in the schema
+CREATE TABLE "Nexa_Sat".nexa_sat (
+    Customer_ID VARCHAR(50),
+    gender VARCHAR(10),
+    Partner VARCHAR(3),
+    Dependents VARCHAR(3),
+    Senior_Citizen INT,
+    Call_Duration FLOAT,
+    Data_Usage FLOAT,
+    Plan_Type VARCHAR(20),
+    Plan_Level VARCHAR(20),
+    Monthly_Bill_Amount FLOAT,
+    Tenure_Months INT,
+    Multiple_Lines VARCHAR(3),
+    Tech_Support VARCHAR(3),
+    Churn INT);
+
+    -- Set search path for queries
+SET search_path TO "Nexa_Sat"
+
+-- Confirm current schema
+SELECT current_schema();
+
+SELECT * FROM 
+nexa_sat
+
+
+-- Data Cleaning
+-- Check for Duplicates
+
+SELECT Customer_ID, gender, Partner, Dependents,
+  Senior_Citizen, Call_Duration, Data_Usage,
+  Plan_Type, Plan_Level, Monthly_Bill_Amount,
+  Tenure_Months, Multiple_Lines, Tech_Support, 
+  Churn
+  FROM nexa_sat
+  GROUP BY
+  Customer_ID, gender, Partner, Dependents,
+  Senior_Citizen, Call_Duration, Data_Usage,
+  Plan_Type, Plan_Level, Monthly_Bill_Amount,
+  Tenure_Months, Multiple_Lines, Tech_Support, 
+  Churn
+  HAVING COUNT(*) > 1 -- This will filter out duplicate rows
+
+  --Check for null values
+SELECT *
+FROM nexa_sat
+WHERE Customer_ID IS NULL
+OR gender IS NULL
+OR Partner IS NULL
+OR Dependents IS NULL
+OR Senior_Citizen IS NULL
+OR Call_Duration IS NULL
+OR Data_Usage IS NULL
+OR Plan_Type IS NULL
+OR Plan_Level IS NULL
+OR Monthly_Bill_Amount IS NULL
+OR Tenure_Months IS NULL
+OR Multiple_Lines IS NULL
+OR Tech_Support IS NULL
+OR Churn IS NULL;
+
+---EDA Exploratory Data Analysis
+-- Total Users
+
+SELECT COUNT(Customer_ID) AS current_Users
+FROM  nexa_sat
+WHERE Churn = 0;
+
+-- Total Users by Level
+SELECT Plan_Level, COUNT(Customer_ID) AS current_Users
+FROM  nexa_sat
+WHERE Churn = 0
+GROUP BY Plan_Level;
+
+-- Total Revenue
+SELECT CAST(SUM(Monthly_Bill_Amount) AS DECIMAL(18, 2)) AS Total_Revenue
+FROM nexa_sat;
+
+-- Revenue by plan level
+SELECT plan_level, CAST(SUM(Monthly_Bill_Amount) AS DECIMAL(18, 2)) AS Revenue
+FROM nexa_sat
+GROUP BY 1
+ORDER BY 2;
+
+-- Churn count by plan type and plan level
+SELECT plan_level,
+	   plan_type,
+	COUNT(*) AS Total_Customers,
+	SUM(Churn) AS Churn_Count
+FROM nexa_sat
+GROUP BY 1,2
+ORDER BY 1;
+
+-- Average Tenure by plan level
+SELECT plan_level, ROUND(AVG(tenure_months),2) AS Average_Tenure
+FROM nexa_sat
+GROUP BY 1;
+
+-- Marketing Startegies
+-- Create table of existing users only
+
+CREATE TABLE existing_users AS
+SELECT * FROM nexa_sat
+WHERE Churn = 0;
+
+-- View new table
+SELECT * 
+FROM existing_users;
+
+-- Calculate average revenue per user
+SELECT ROUND(AVG(monthly_bill_amount::INT),2) AS ARPU
+FROM existing_users;
+
+-- Calculate the CLV(Customer lifetime value) and add column
+ALTER TABLE existing_users
+ADD COLUMN clv FLOAT;
+
+UPDATE existing_users
+SET clv = monthly_bill_amount * tenure_months;
+
+-- View new column
+SELECT customer_id, clv
+FROM existing_users;
+
+-- CLV SCORE
+-- Monthly_bill = 40%, tenure = 30%, call_duration = 10%, data_usage = 10%, premium = 10%
+ALTER TABLE existing_users
+ADD COLUMN clv_score NUMERIC(10,2);
+
+UPDATE existing_users
+SET clv_score = 
+			(0.4 * monthly_bill_amount)+
+			(0.3 * tenure_months)+
+			(0.1 * call_duration)+
+			(0.1 * data_usage)+
+			(0.1 * CASE WHEN plan_level = 'Premium'
+					THEN 1 ELSE 0
+					END);
+
