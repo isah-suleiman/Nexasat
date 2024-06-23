@@ -157,3 +157,79 @@ ORDER BY 1;
 SELECT plan_level, ROUND(AVG(tenure_months),2) AS Average_Tenure
 FROM nexa_sat
 GROUP BY 1;
+
+```SQL
+-- Marketing Strategies
+-- Create a table of existing users only
+
+CREATE TABLE existing_users AS
+SELECT * FROM nexa_sat
+WHERE Churn = 0;
+
+-- View new table
+SELECT * 
+FROM existing_users;
+
+-- Calculate average revenue per user
+SELECT ROUND(AVG(monthly_bill_amount::INT),2) AS ARPU
+FROM existing_users;
+```
+![Average Revenue Per User](assets/images/arpu.png)
+
+```SQL
+-- Calculate the CLV(Customer lifetime value) and add a new column
+ALTER TABLE existing_users
+ADD COLUMN clv FLOAT;
+
+UPDATE existing_users
+SET clv = monthly_bill_amount * tenure_months;
+
+-- View new column
+SELECT customer_id, clv
+FROM existing_users;
+
+-- CLV SCORE
+-- Monthly_bill = 40%, tenure = 30%, call_duration = 10%, data_usage = 10%, premium = 10%
+ALTER TABLE existing_users
+ADD COLUMN clv_score NUMERIC(10,2);
+
+UPDATE existing_users
+SET clv_score = 
+			(0.4 * monthly_bill_amount)+
+			(0.3 * tenure_months)+
+			(0.1 * call_duration)+
+			(0.1 * data_usage)+
+			(0.1 * CASE WHEN plan_level = 'Premium'
+			THEN 1 ELSE 0
+END);
+
+-- View new clv score column
+SELECT customer_id, clv_score
+FROM existing_users;
+```
+![Clv Score](assets/images/clv_score.png)
+
+```SQL
+-- Group users into segments based on their CSV scores
+ALTER TABLE existing_users
+ADD COLUMN clv_segments VARCHAR;
+
+UPDATE existing_users
+SET clv_segments = 
+		CASE WHEN clv_score > (SELECT percentile_cont(0.85)
+		WITHIN GROUP (ORDER BY clv_score)
+		FROM existing_users ) THEN 'High Value'
+		WHEN clv_score >= (SELECT percentile_cont(0.50)
+		WITHIN GROUP (ORDER BY clv_score)
+		FROM existing_users ) THEN 'Moderate Value'
+		WHEN clv_score >=  (SELECT percentile_cont(0.25)
+		WITHIN GROUP (ORDER BY clv_score)
+		FROM existing_users ) THEN 'Low Value'
+		ELSE 'Churn Risk'
+END;
+
+-- View segments
+SELECT customer_id, clv, clv_score, clv_segments
+FROM existing_users;
+
+```
