@@ -2,13 +2,13 @@
 
 ## Project Overview: Enhancing Revenue Strategies with CLV Segmentation
 
-!(assets/images/NEXASAT.png)
+!(assets/images/NEXASAT.jpg)
 
 ### Business Challenge
 NexaSat, a prominent player in the telecommunications industry, faces a critical dilemma: how to optimize marketing efforts and resource allocation. Their diverse customer base—ranging from occasional users to loyal enthusiasts—requires a tailored approach. As competition intensifies, NexaSat aims to maximize revenue from existing customers while identifying high-potential prospects. The challenge lies in pinpointing receptive customers and crafting personalized offers.
 
 ### Untapped Potential
-NexaSat recognizes untapped opportunities within their customer base. Personalized offers and bundled services could boost Average Revenue Per User (ARPU). However, without a structured approach, their up-selling and cross-selling efforts yield suboptimal results.
+NexaSat recognizes untapped opportunities within its customer base. Personalized offers and bundled services could boost Average Revenue Per User (ARPU). However, without a structured approach, their up-selling and cross-selling efforts yield suboptimal results.
 
 ### The Solution: CLV Segmentation
 - What is CLV Segmentation?
@@ -174,7 +174,7 @@ FROM existing_users;
 SELECT ROUND(AVG(monthly_bill_amount::INT),2) AS ARPU
 FROM existing_users;
 ```
-![Average Revenue Per User](assets/images/arpu.png)
+![Average Revenue Per User](assets/images/arpu.jpg)
 
 ```SQL
 -- Calculate the CLV(Customer lifetime value) and add a new column
@@ -266,7 +266,7 @@ AND tech_support = 'No' -- Don't have tech support
 AND (clv_segments = 'Churn Risk' OR clv_segments = 'Low Value');
 ```
 ![Customers we can offer Tech Support](assets/images/tech_support.png)
-### NexaSat has 115 customers who are senior citizens but don't have tech support. They may require a little help to be able to enjoy their subscription plans. This will generate more revenue for the company
+###### NexaSat has 115 customers who are senior citizens but don't have tech support. They may require a little help to be able to enjoy their subscription plans. This will generate more revenue for the company
 
 ```SQL
 -- Cross-selling: multiple lines for partners and dependents
@@ -277,7 +277,7 @@ AND (dependents = 'Yes' OR partner = 'Yes')
 AND plan_level = 'Basic';
 ```
 ```SQL
--- Cross-selling: Users who have been with the company for over a year, have dependents but don't have multiple lines
+-- Cross-selling: Users who have been with the company for over a year, but don't have multiple lines
 SELECT customer_id 
 	FROM existing_users
 WHERE tenure_months <= 12
@@ -293,7 +293,8 @@ AND clv_segments ='Churn Risk';
 ```
 ```SQL
 -- Up-selling: Basic to Premium for longer lock-in Period and higher ARPU
-SELECT plan_level, ROUND(AVG(monthly_bill_amount::INT),2) AS avg_bill, ROUND(AVG(tenure_months::INT),2) AS avg_tenure
+SELECT  plan_level, ROUND(AVG(monthly_bill_amount::INT),2) AS avg_bill,
+	ROUND(AVG(tenure_months::INT),2) AS avg_tenure
 	FROM existing_users
 	WHERE clv_segments ='High Value'
 	OR clv_segments = 'Moderate Value'
