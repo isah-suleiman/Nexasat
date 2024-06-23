@@ -23,7 +23,7 @@ NexaSat recognizes untapped opportunities within their customer base. Personaliz
   - Strengthen loyalty in a competitive telecom landscape.
 
 ### Project Aim
-Implement CLV segmentation to strategically boost revenue, enhance ARPU, and foster lasting customer satisfaction. NexaSat aims to secure a competitive edge by delivering tailored solutions aligned with customer preferences.
+Implement CLV segmentation to strategically boost revenue, enhance average revenue per user (ARPU), and foster lasting customer satisfaction. NexaSat aims to secure a competitive edge by delivering tailored solutions aligned with customer preferences.
 
 ### Data Description
 - Customer Data (July 2023):
@@ -231,5 +231,156 @@ END;
 -- View segments
 SELECT customer_id, clv, clv_score, clv_segments
 FROM existing_users;
+![Total CSV score](assets/images/all_csv_score.png)
+```
+```SQL
+-- Analyzing the segments
+-- avg bill and tenure per segment
+SELECT clv_segments, 
+		ROUND(AVG(monthly_bill_amount::INT),2) AS avg_monthly_charges,
+		ROUND(AVG(tenure_months::INT),2) AS avg_tenure
+FROM existing_users
+GROUP BY 1;
 
+-- tech support  and multiple lines count
+SELECT clv_segments,
+	ROUND(AVG(CASE WHEN tech_support ='Yes' THEN 1 ELSE 0 END),2) AS tech_support_pct,
+	ROUND(AVG(CASE WHEN multiple_lines = 'Yes' THEN 1 ELSE 0 END),2) AS multiple_line_pct
+FROM existing_users
+GROUP BY 1;
+
+-- revenue per segment
+SELECT clv_segments, COUNT(customer_id), 
+		CAST(SUM(monthly_bill_amount * tenure_months) AS NUMERIC(10,2)) AS total_revenue 
+FROM existing_users
+GROUP BY 1;
+```
+```SQL
+-- Cross-selling and up-selling
+-- CROSS SELLING tech support to senior citizens
+SELECT customer_id
+FROM existing_users
+WHERE senior_citizen = 1 -- senior citizens
+AND dependents = 'No' -- no children
+AND tech_support = 'No' -- Don't have tech support
+AND (clv_segments = 'Churn Risk' OR clv_segments = 'Low Value');
+```
+![Customers we can offer Tech Support](assets/images/tech_support.png)
+### NexaSat has 115 customers who are senior citizens but don't have tech support. They may require a little help to be able to enjoy their subscription plans. This will generate more revenue for the company
+
+```SQL
+-- Cross-selling: multiple lines for partners and dependents
+SELECT customer_id
+FROM existing_users
+WHERE multiple_lines = 'No'
+AND (dependents = 'Yes' OR partner = 'Yes')
+AND plan_level = 'Basic';
+```
+```SQL
+-- Cross-selling: Users who have been with the company for over a year, have dependents but don't have multiple lines
+SELECT customer_id 
+	FROM existing_users
+WHERE tenure_months <= 12
+	AND (dependents = 'Yes' OR partner = 'Yes')
+	AND multiple_lines = 'No';
+```
+```SQL
+-- UP-SELLING premium discounts for basic users with churn risk
+SELECT customer_id
+FROM existing_users
+	WHERE plan_level ='Basic'
+AND clv_segments ='Churn Risk';
+```
+```SQL
+-- Up-selling: Basic to Premium for longer lock-in Period and higher ARPU
+SELECT plan_level, ROUND(AVG(monthly_bill_amount::INT),2) AS avg_bill, ROUND(AVG(tenure_months::INT),2) AS avg_tenure
+	FROM existing_users
+	WHERE clv_segments ='High Value'
+	OR clv_segments = 'Moderate Value'
+	GROUP BY 1;
+```
+```SQL
+-- Offer discounts to customers who are on the basic plan but spend over 150 monthly
+SELECT customer_id, monthly_bill_amount
+	FROM existing_users
+WHERE plan_level = 'Basic'
+	AND clv_segments = 'High Value'
+	OR clv_segments = 'Moderate Value'
+	AND monthly_bill_amount > 150;
+```
+![Row count check](assets/images/discount.png)
+
+```SQL
+-- CREATE STORED PROCEDURES
+-- Senior citizens who will be offered tech support
+
+CREATE FUNCTION  tech_support_snr_citizen()
+	RETURNS TABLE(customer_id VARCHAR (50))
+	AS $$
+BEGIN
+	RETURN QUERY
+	SELECT eu.customer_id
+FROM existing_users eu
+WHERE eu.senior_citizen = 1 -- senior citizens
+AND eu.dependents = 'No' -- no children
+AND eu.tech_support = 'No' -- Don't have tech support
+AND eu.clv_segments = 'Churn Risk' OR eu.clv_segments = 'Low Value';
+END
+	$$ LANGUAGE plpgsql;
+
+-- at-risk customers who will be offered a premium discount
+CREATE FUNCTION churn_risk_discount()
+RETURNS TABLE(customer_id VARCHAR (50))
+AS $$
+BEGIN
+	RETURN QUERY
+	SELECT eu.customer_id
+FROM existing_users eu
+	WHERE eu.plan_level ='Basic'
+AND eu.clv_segments ='Churn Risk';
+END
+	$$ LANGUAGE plpgsql;
+
+-- High-usage customers who will be offered a premium upgrade
+CREATE FUNCTION high_usage_basic()
+RETURNS TABLE (customer_id VARCHAR(50))
+AS $$
+	BEGIN
+	RETURN QUERY
+	SELECT eu.customer_id
+	FROM existing_users eu
+WHERE plan_level = 'Basic'
+	AND eu.clv_segments = 'High Value'
+	OR eu.clv_segments = 'Moderate Value'
+	AND eu.monthly_bill_amount > 150;
+END
+	$$ LANGUAGE plpgsql;
+
+-- Premium discount for basic users
+CREATE FUNCTION  basic_users_discount()
+	RETURNS TABLE(customer_id VARCHAR (50))
+	AS $$
+BEGIN
+	RETURN QUERY
+SELECT eu.customer_id
+FROM existing_users eu
+	WHERE eu.plan_level ='Basic'
+AND eu.clv_segments ='Churn Risk';
+END
+	$$ LANGUAGE plpgsql;
+```
+
+```SQL
+-- USE PROCEDURES
+-- churn risk discount
+SELECT *
+	FROM churn_risk_discount();
+
+-- high usage basic customers
+SELECT * FROM high_usage_basic();
+
+-- premium for basic users
+SELECT * FROM basic_users_discount()
+	
+-- END OF QUERY
 ```
