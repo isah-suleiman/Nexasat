@@ -51,8 +51,9 @@ Implement CLV segmentation to strategically boost revenue, enhance ARPU, and fos
    - Develop personalized marketing strategies (special offers, targeted promotions) aligned with customer preferences.
 
 ### Solution
+```SQL
 
-  -- Query 1: Create Schema
+-- Query 1: Create Schema
 CREATE SCHEMA Nexa.Sat;
 
 -- Query 2: Create a table in the schema
@@ -72,3 +73,4 @@ CREATE TABLE "Nexa_Sat".nexa_sat (
     Tech_Support VARCHAR(3),
     Churn INT);
 
+```
