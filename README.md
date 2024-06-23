@@ -74,3 +74,86 @@ CREATE TABLE "Nexa_Sat".nexa_sat (
     Churn INT);
 
 ```
+```SQL
+-- Import data
+
+-- Set search path for queries
+SET search_path TO "Nexa_Sat"
+
+-- Confirm current schema
+SELECT current_schema();
+
+SELECT * FROM 
+nexa_sat
+
+-- Data Cleaning
+-- Check for Duplicates
+
+SELECT Customer_ID, gender, Partner, Dependents,
+  Senior_Citizen, Call_Duration, Data_Usage,
+  Plan_Type, Plan_Level, Monthly_Bill_Amount,
+  Tenure_Months, Multiple_Lines, Tech_Support, 
+  Churn
+  FROM nexa_sat
+  GROUP BY
+  Customer_ID, gender, Partner, Dependents,
+  Senior_Citizen, Call_Duration, Data_Usage,
+  Plan_Type, Plan_Level, Monthly_Bill_Amount,
+  Tenure_Months, Multiple_Lines, Tech_Support, 
+  Churn
+  HAVING COUNT(*) > 1 -- This will filter out duplicate rows
+
+--Check for null values
+SELECT *
+FROM nexa_sat
+WHERE Customer_ID IS NULL
+OR gender IS NULL
+OR Partner IS NULL
+OR Dependents IS NULL
+OR Senior_Citizen IS NULL
+OR Call_Duration IS NULL
+OR Data_Usage IS NULL
+OR Plan_Type IS NULL
+OR Plan_Level IS NULL
+OR Monthly_Bill_Amount IS NULL
+OR Tenure_Months IS NULL
+OR Multiple_Lines IS NULL
+OR Tech_Support IS NULL
+OR Churn IS NULL;
+
+---EDA Exploratory Data Analysis
+-- Total Users
+
+SELECT COUNT(Customer_ID) AS current_Users
+FROM  nexa_sat
+WHERE Churn = 0;
+
+-- Total Users by Level
+SELECT Plan_Level, COUNT(Customer_ID) AS current_Users
+FROM  nexa_sat
+WHERE Churn = 0
+GROUP BY Plan_Level;
+
+-- Total Revenue
+SELECT CAST(SUM(Monthly_Bill_Amount) AS DECIMAL(18, 2)) AS Total_Revenue
+FROM nexa_sat;
+
+-- Revenue by plan level
+SELECT plan_level, CAST(SUM(Monthly_Bill_Amount) AS DECIMAL(18, 2)) AS Revenue
+FROM nexa_sat
+GROUP BY 1
+ORDER BY 2;
+
+-- Churn count by plan type and plan level
+SELECT plan_level,
+	   plan_type,
+	COUNT(*) AS Total_Customers,
+	SUM(Churn) AS Churn_Count
+FROM nexa_sat
+GROUP BY 1,2
+ORDER BY 1;
+
+-- Average Tenure by plan level
+SELECT plan_level, ROUND(AVG(tenure_months),2) AS Average_Tenure
+FROM nexa_sat
+GROUP BY 1;
