@@ -386,3 +386,28 @@ SELECT * FROM basic_users_discount()
 	
 -- END OF QUERY
 ```
+
+## Discovery
+
+- What did I learn?
+I discovered that
+
+1. Senior Citizens:
+   - There are 115 senior citizens who may benefit from tech support due to their limited tech knowledge.
+   - We can cross-sell tech support services to assist them with using our company's products.
+
+2. Basic Plan Customers with Partners and Dependents:
+   - Among the 376 people on the basic plan, some have partners and dependents.
+   - We'll offer these customers multiple lines to accommodate their family needs.
+
+3. New Customers with Dependents and Partners:
+   - Among the 273 customers who joined within the last year, many have dependents and partners.
+   - We'll provide them with multiple lines to meet their communication requirements.
+
+4. Churn Risk and Premium Plan:
+   - Users at high churn risk (especially those on the basic plan) should receive the premium plan.
+   - As a bonus, we can sweeten the deal to retain them.
+
+5. Discounted Premium Plan for High-Spending Basic Plan Customers:
+   - The 683 existing customers on the basic plan but spending over $150 per month deserve an upgrade.
+   - We'll offer them the premium plan at a discounted rate.
