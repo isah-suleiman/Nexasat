@@ -3,7 +3,7 @@
 ## Project Overview: Enhancing Revenue Strategies with CLV Segmentation
 
 
-![](assets/images/NEXASATT.png)
+![](assets/images/smarthomeinc.jpg)
 
 ### Business Challenge
 NexaSat, a prominent player in the telecommunications industry, faces a critical dilemma: how to optimize marketing efforts and resource allocation. Their diverse customer base—ranging from occasional users to loyal enthusiasts—requires a tailored approach. As competition intensifies, NexaSat aims to maximize revenue from existing customers while identifying high-potential prospects. The challenge lies in pinpointing receptive customers and crafting personalized offers.
